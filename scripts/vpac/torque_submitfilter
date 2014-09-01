@@ -1,4 +1,4 @@
-#!/usr/local/python/2.4.4-gcc/bin/python -E
+#!/usr/bin/python -E
 """Perform a series of filters on an input pbs script"""
 
 # Written by Brett Pemberton (brett@vpac.org), Sam Morrison (sam@vpac.org)
