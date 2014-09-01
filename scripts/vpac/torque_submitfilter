@@ -471,6 +471,15 @@ if __name__ == "__main__":
         print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
         sys.exit(-1)
 
+    if ( fluent_job or ansys_job ):
+        if ( int(core_count) > 128 ): 
+            print >> sys.stderr, "ERROR: You are using ANSYS or Fluent and have asked for more than 128 cores."
+            print >> sys.stderr, "       Limits exist to stop you using more than 128 cores for a single job."
+            print >> sys.stderr, "       The job you submitted asked for %s cores." % ( core_count )
+            print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
+            sys.exit(-1)
+
+
     if error_and_die == True:
         print >> sys.stderr, error
         sys.exit(-1)
