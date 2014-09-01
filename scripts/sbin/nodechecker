@@ -36,10 +36,15 @@ def get_job_map():
     p = PBSQuery()
     jobs = p.getjobs()
     for name, job in jobs.items():
-        if job['job_state'] == "R" or job['job_state'] == "E":
-            owner = job['euser']
-            jobnum = name.split('.')[0]
-            jobmap[jobnum] = owner
+        #print name,job['job_state'],job['euser']
+        try:
+           if job['job_state'] == "R" or job['job_state'] == "E":
+              owner = job['euser']
+              jobnum = name.split('.')[0]
+              jobmap[jobnum] = owner
+        except:
+          print 'Error with: ' +name
+          sys.exit(-1)
 
 
 def get_node_info():
