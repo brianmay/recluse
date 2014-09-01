@@ -261,6 +261,8 @@ if __name__ == "__main__":
     hadoop_job = False
     blocked_modules = []
     gres_required = ["fluent","ansys","abaqus"]
+    last_PBS_line = 0
+    first_command_line = 0
     core_count = 1
 
     # iterate over rest of lines
@@ -272,6 +274,16 @@ if __name__ == "__main__":
         # if so, ignore this line
         if ord(pbs_in[i-1][len(pbs_in[i-1])-1]) == 10 and ord(pbs_in[i-1][len(pbs_in[i-1])-2]) == 92:
             continue
+
+        # Keep track of the last #PBS line
+        if line.startswith('#PBS'):
+            last_PBS_line = i;
+        # Keep track of the first line with an actual command
+        else: 
+            if ( first_command_line == 0 ) and line and not line.isspace() and not line.startswith('#'):
+#                print "Non blank line detected %s" % (i+1)
+                first_command_line = i
+           
 
         if line.count('gaussian') > 0:
             gaussian_job = True
@@ -430,6 +442,15 @@ if __name__ == "__main__":
             core_count = int(n_count) * int(p_count)
 
 #    print "Job will run on %s cores" % (core_count)
+
+    # If we detected a #PBS line after the first command line, alert the user and reject the job
+### DISABLED by CJW 2013-06-06 - does not work with EGSnrc/BEAM
+#    if last_PBS_line >= first_command_line:
+#        print >> sys.stderr, "ERROR: You have specified a command before your last #PBS line"
+#        print >> sys.stderr, "       The bad line is number %s in your script" % (first_command_line+1)
+#        print >> sys.stderr, "If need help please email %s for assistance.\n" % (help_email)
+#        sys.exit(-1)
+
 
 
     # Force gaussian jobs to run in production partition
