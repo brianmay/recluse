@@ -261,6 +261,7 @@ if __name__ == "__main__":
     hadoop_job = False
     blocked_modules = []
     gres_required = ["fluent","ansys","abaqus"]
+    core_count = 1
 
     # iterate over rest of lines
     for line in pbs_in[1:]:
@@ -415,6 +416,21 @@ if __name__ == "__main__":
         pbs_in.insert(email_line, "#PBS -M %s\n" % (email))
     if project_line > 0:
         pbs_in.insert(project_line, "#PBS -A %s\n" % (project))
+
+
+    # Calculate the number of cores the job will run on
+    if nodes_line:
+        nodes = nodes_line.split()[2]
+        if nodes.count(':') == 0:
+            core_count = nodes.split('=')[1]
+        else:
+            nodes_split = nodes.split(':')
+            n_count = nodes_split[0].split('=')[1]
+            p_count = nodes_split[1].split('=')[1]
+            core_count = int(n_count) * int(p_count)
+
+#    print "Job will run on %s cores" % (core_count)
+
 
     # Force gaussian jobs to run in production partition
     # Should not be necessary any more, since repairs - bp 20100111
