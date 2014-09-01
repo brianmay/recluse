@@ -19,7 +19,7 @@ then
 
 	if [ $count -ne 1 ]
 	then
-		echo "ERROR /tmp not mounted from /dev/md1!"
+		echo "ERROR /tmp not mounted from /dev/md4!"
 		exit 1
 	fi
 
