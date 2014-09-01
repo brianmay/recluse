@@ -505,7 +505,10 @@ if __name__ == "__main__":
             core_count = nodes.split('=')[1]
         else:
             nodes_split = nodes.split(':')
-            n_count = nodes_split[0].split('=')[1]
+            if nodes.count('trifid') == 1:
+                n_count = 1
+            else:
+                n_count = nodes_split[0].split('=')[1]
             p_count = nodes_split[1].split('=')[1]
             core_count = int(n_count) * int(p_count)
 
