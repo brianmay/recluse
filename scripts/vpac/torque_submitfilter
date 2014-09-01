@@ -258,7 +258,7 @@ if __name__ == "__main__":
     ansys_gres = False
     schrodinger_job = False
     hadoop_job = False
-    blocked_modules = ["abaqus"]
+    blocked_modules = []
 
     # iterate over rest of lines
     for line in pbs_in[1:]:
