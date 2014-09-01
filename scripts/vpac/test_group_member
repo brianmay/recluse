@@ -48,7 +48,8 @@ then
 	else
 		echo -e "\nWARNING: You are not a member of the $group group."
 		echo -e "\nDue to licensing restrictions, you currently do not have access to this software."
-		echo -e "Please visit http://www.vpac.org/users and log in with your cluster username and password"
+		#echo -e "Please visit http://www.vpac.org/users and log in with your cluster username and password"
+		echo -e "Please visit https://www.vpac.org/accounts/profile/software and log in with your cluster username and password"
 		echo -e "You can join the group by using the 'Add Software' link and agree to the License terms"
 		echo -e "\nPlease email help@vpac.org if you have any questions\n"
 	fi
