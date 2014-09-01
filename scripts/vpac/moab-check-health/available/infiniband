@@ -49,7 +49,8 @@ fi
 
 if [ -x /usr/bin/ibv_devinfo ]
 then
-	count=$(/usr/bin/ibv_devinfo | grep -c "PORT_DOWN")
+        # NOTE: This only checks the first port
+	count=$(/usr/bin/ibv_devinfo -i 1 | grep -c "PORT_DOWN")
 
 	if [ $count -ne 0 ]
 	then
