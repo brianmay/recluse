@@ -284,7 +284,9 @@ if __name__ == "__main__":
            module = line.split()[2]
            if  '/' in module:
                modver = module.split('/')[1]
-               module = module.split('/')[0]
+               module = module.split('/')[0].lower()
+           else:
+               module = module.lower()
 ##           print module
            if module in blocked_modules:
                print >> sys.stderr, "The software package '%s' is not available on Trifid" % (module)
