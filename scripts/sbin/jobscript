@@ -22,6 +22,8 @@
 
 strip=0
 
+PBSHOME=/var/spool/torque
+
 while getopts ":s" option
 do
         case $option in
@@ -31,14 +33,14 @@ done
 
 shift $(($OPTIND - 1))
 
-if [ -e /usr/spool/PBS/server_priv/jobs/$1.*.SC ]
+if [ -e $PBSHOME/server_priv/jobs/$1.*.SC ]
 then
-	file=$(echo /usr/spool/PBS/server_priv/jobs/$1.*.SC)
-elif [ -e /usr/spool/PBS/mom_priv/jobs/$1.*.SC ]
+	file=$(echo $PBSHOME/server_priv/jobs/$1.*.SC)
+elif [ -e $PBSHOME/mom_priv/jobs/$1.*.SC ]
 then
-	file=$(echo /usr/spool/PBS/mom_priv/jobs/$1.*.SC)
+	file=$(echo $PBSHOME/mom_priv/jobs/$1.*.SC)
 else
-	if [ -e /usr/spool/PBS/*_priv/jobs/$1.*.JB ]
+	if [ -e $PBSHOME/*_priv/jobs/$1.*.JB ]
 	then
 		echo "Job is interactive"
 	else
