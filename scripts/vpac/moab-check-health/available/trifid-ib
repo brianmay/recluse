@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+
+@ibstat = `ibstat|grep -A2 'Port 1'`;
+
+chomp ($state = $ibstat[1]);
+chomp ($physical = $ibstat[2]);
+
+$state =~ s/.+ //;
+$physical =~ s/.+ //;
+
+if ($state ne "Active") {
+  print ("ERROR IB state: $state - Physical state: $physical\n");
+  exit 1;
+}
+
+exit 0;

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [[ ! `hostname` =~ trifid.[180-184]  ]]; then
+
+   if [[ ! `mount -t lustre| grep lustre` ]]; then
+      echo "ERROR Lustre not mounted"
+      exit 1
+   fi
+fi
+
+exit 0

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+jobsnodes=`/usr/local/sbin/jobisonnodes $1`
+nodes=`echo $jobsnodes | sed -e "s/\ /,/g"`
+
+shift
+
+xdsh $nodes `echo $*`
