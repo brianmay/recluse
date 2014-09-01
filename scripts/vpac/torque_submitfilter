@@ -252,6 +252,7 @@ if __name__ == "__main__":
     nodes_line = ""
     name_line = False
     fluent_job = False
+    ansys_job = False
     abaqus_job = False
     abaqus_gres = False
     old_fluent = False
@@ -259,6 +260,7 @@ if __name__ == "__main__":
     schrodinger_job = False
     hadoop_job = False
     blocked_modules = []
+    gres_required = ["fluent","ansys","abaqus"]
 
     # iterate over rest of lines
     for line in pbs_in[1:]:
@@ -294,11 +296,17 @@ if __name__ == "__main__":
                print >> sys.stderr, "If you feel this is an error, please email %s" % (help_email)
                sys.exit(-1);
 
-        if line.count('module load fluent') > 0:
-            fluent_job = True
+# NOT YET BEEN IMPLEMENTED
+#           if module in gres_required:
+
+           if module == "fluent":
+               fluent_job = True
         
-	if line.count('module load abaqus') > 0:
-            abaqus_job = True
+           if module == "ansys":
+               ansys_job = True
+        
+           if module == "abaqus":
+               abaqus_job = True
 
         if line.count('MDCE_MATLAB_EXE') > 0:
             matlab_job = True
@@ -402,6 +410,7 @@ if __name__ == "__main__":
                 email_line = i
                 have_hit_email_already = True
 
+
     if email_line > 0:
         pbs_in.insert(email_line, "#PBS -M %s\n" % (email))
     if project_line > 0:
@@ -435,12 +444,14 @@ if __name__ == "__main__":
 #        print >> sys.stderr, "For more information please see http://vpac.org/quota\n"
 #        sys.exit(-1)
 
-# BP
+# BP+CW
 # Die if they are running fluent and not requesting licenses, for now.
 #
-    if (fluent_job and not ansys_gres) or old_fluent:
-        print >> sys.stderr, "ERROR: You are using Fluent and not requesting licenses properly"
-        print >> sys.stderr, "Please read this tutorial for details: http://www.vpac.org/node/353"
+    if ( (fluent_job or ansys_job) and not ansys_gres) or old_fluent:
+        print >> sys.stderr, "ERROR: You are using ANSYS or Fluent and not requesting licenses properly"
+        print >> sys.stderr, "Please read the following tutorials for details: "
+        print >> sys.stderr, "   http://www.vpac.org/training/tutorials/Acquiring_and_Using_Licenses"
+        print >> sys.stderr, "   http://www.vpac.org/training/tutorials/ansys_setup"
         print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
         sys.exit(-1)
 
@@ -449,8 +460,10 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     if (abaqus_job and not abaqus_gres):
-        print >> sys.stderr, "WARNING: You are using Abaqus and not requesting licenses properly"
+        print >> sys.stderr, "ERROR: You are using Abaqus and not requesting licenses properly."
+        print >> sys.stderr, "See:  http://www.vpac.org/training/tutorials/Acquiring_and_Using_Licenses"
         print >> sys.stderr, "If you don't understand this message, please email %s for assistance.\n" % (help_email)
+        sys.exit(-1)
 
     if software_line:
         print >> sys.stderr, "WARNING: You have specified a \"-l software\" line in your pbs script."
