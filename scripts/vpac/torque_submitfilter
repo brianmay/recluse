@@ -258,6 +258,7 @@ if __name__ == "__main__":
     ansys_gres = False
     schrodinger_job = False
     hadoop_job = False
+    blocked_modules = ["abaqus"]
 
     # iterate over rest of lines
     for line in pbs_in[1:]:
@@ -277,6 +278,19 @@ if __name__ == "__main__":
 
         if line.count('g09') > 0:
             gaussian_job = True
+
+        # Check if a module is being loaded, and that it is not blocked
+        if line.count('module load') > 0 and not line.startswith("#"):
+           module = line.split()[2]
+           if  '/' in module:
+               modver = module.split('/')[1]
+               module = module.split('/')[0]
+##           print module
+           if module in blocked_modules:
+               print >> sys.stderr, "The software package '%s' is not available on Trifid" % (module)
+               print >> sys.stderr, "Please run this software on Tango until furter notice"
+               print >> sys.stderr, "If you feel this is an error, please email %s" % (help_email)
+               sys.exit(-1);
 
         if line.count('module load fluent') > 0:
             fluent_job = True
