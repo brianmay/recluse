@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+PBSPATH=/var/spool/torque
+
 function usage {
 
 	echo "usage: $0 <o|e|p|t|m|r> <job number>"
@@ -76,13 +78,13 @@ then
 	ssh $leadnode "/usr/local/recluse/scripts/sbin/memory_used_by_job ${job}"
 elif [ "$1" == "o" ]
 then
-	ssh $leadnode "cat /usr/spool/PBS/spool/${hashname}.OU"
+	ssh $leadnode "cat $PBSPATH/spool/${hashname}.OU"
 elif [ "$1" == "e" ]
 then
-	ssh $leadnode "cat /usr/spool/PBS/spool/${hashname}.ER"
+	ssh $leadnode "cat $PBSPATH/spool/${hashname}.ER"
 elif [ "$1" == "p" ]
 then
-	ssh $leadnode "cat /usr/spool/PBS/mom_priv/jobs/${hashname}.SC"
+	ssh $leadnode "cat $PBSPATH/mom_priv/jobs/${hashname}.SC"
 elif [ "$1" == "r" ]
 then
 	ssh $leadnode "ps axu | egrep -f /dev/cpuset/torque/${hashname}/tasks"
