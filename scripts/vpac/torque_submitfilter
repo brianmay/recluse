@@ -21,14 +21,37 @@ import xmlrpclib
 import sys, os, pwd
 import getopt
 import commands
+import logging
+from logging.handlers import SysLogHandler
 
 help_email = "help@vpac.org"
 url = 'https://www.vpac.org/accounts/xmlrpc/'
 banned_users = ("sudip")
 
+logger = logging.getLogger()
+#logger.setLevel(logging.DEBUG)
+logger.addHandler(SysLogHandler("/dev/log", facility=SysLogHandler.LOG_LOCAL6))
+
 # Set to true when the database or website is down, to stop errors
 database_down = False
 
+def log_function(function): 
+    def wrapper(*args, **kwargs): 
+        args_str = list([str(s) for s in args])
+        args_str.extend([ "%s=%s"%(j,k) for j,k in kwargs.iteritems() ])
+        args_str = ", ".join(args_str)
+        logging.debug("%s(%s)" % (function.__name__, args_str))
+        try:
+           result = function(*args, **kwargs)
+        except:
+           logging.exception("%s(%s)" % (function.__name__, args_str))
+           raise
+        logging.debug("%s(%s) --> %s" % (function.__name__, args_str, result))
+        return result
+    return wrapper
+
+
+@log_function
 def get_user_disk_quota(this_username):
     """See if the user has a custom disk quota"""
 
@@ -39,8 +62,10 @@ def get_user_disk_quota(this_username):
         print >> sys.stderr, "ERROR: Can't contact the vpac.org accounts system."
         print >> sys.stderr, "       Sorry, but jobs cannot be submitted at present."
         print >> sys.stderr, "       Please try again later"
+        logging.exception("get_user_disk_quota(%s)" % this_username)
         sys.exit(-1)
 
+@log_function
 def project_under_quota(this_project_id):
     """See if this project is currently under quota."""
 
@@ -51,8 +76,10 @@ def project_under_quota(this_project_id):
         print >> sys.stderr, "ERROR: Can't contact the vpac.org accounts system."
         print >> sys.stderr, "       Sorry, but jobs cannot be submitted at present."
         print >> sys.stderr, "       Please try again later"
+        logging.exception("project_under_quota(%s)" % this_project_id)
         sys.exit(-1)
     
+@log_function
 def get_project(this_username, this_project_id=''):
     """Get the users default project, or confirm if the supplied project is theirs"""
 
@@ -66,15 +93,18 @@ def get_project(this_username, this_project_id=''):
         print >> sys.stderr, "ERROR: Can't contact the vpac.org accounts system."
         print >> sys.stderr, "       Sorry, but jobs cannot be submitted at present."
         print >> sys.stderr, "       Please try again later"
+        logging.exception("get_project(%s, %s)" % (this_username, this_project_id))
         sys.exit(-1)
 
     if this_project == "None":
         print >> sys.stderr, "ERROR: You are not a member of any projects."
         print >> sys.stderr, "       Please apply to join a project via the VPAC website."
+        logging.error("get_project(%s, %s) returned no project" % (this_username, this_project_id))
         sys.exit(-1)
 
     return this_project
     
+@log_function
 def user_under_disk_quota(this_username):
     """Check if the user is under the disk quota"""
 
@@ -100,6 +130,7 @@ def user_under_disk_quota(this_username):
     else:
         return False
 
+@log_function
 def check_shell(this_shell):
     """Check if this shell is a valid one"""
 
@@ -135,14 +166,25 @@ if __name__ == "__main__":
     username = pwd.getpwuid(os.getuid()) [0]
     interactive = False
 
+    logging.debug("started")
+    logging.debug("python version: %s" % sys.version)
+    logging.debug("python prefix: %s" % sys.prefix)
+    logging.debug("python path: %s" % sys.path)
+    logging.debug("python argv: %s" % sys.argv)
+#    for key, value in os.environ.iteritems():
+#       logging.debug("environment: %s=%s" % (key,value))
+    logging.debug("username: %s" % username)
+
     if username in banned_users:
         print >> sys.stderr, "User %s has been blocked from submitting jobs." % (username)
         print >> sys.stderr, "If you feel this is not correct, please email %s" % (help_email)
+        logging.error("user is banned")
         sys.exit(-1)
 
     if len(username) > 30:
         print >> sys.stderr, "Apologies, but your username generates a torque bug."
         print >> sys.stderr, "We have to stop your jobs for now. Please email %s" % (help_email)
+        logging.error("username is too long")
         sys.exit(-1)
 
     # Try and get email from .forward
@@ -171,29 +213,37 @@ if __name__ == "__main__":
     #Parse Opts
     opts, args = getopt.getopt(sys.argv[1:], 'a:A:b:c:C:d:D:e:hIj:k:l:m:M:N:o:p:P:q:r:S:t:T:u:Vv:w:W:Xxz')
     opts = dict(opts)
+    logging.debug("opts: %s", opts)
+    logging.debug("args: %s", args)
 
     if '-A' in opts:
         project = opts['-A']
         new_project = get_project(username, project)
+        logging.debug("cmd line -A: project=%s, new_project=%s" % (project, new_project))
         if new_project != project:
             print >> sys.stderr, "ERROR: You are not a member of project %s" % (project)
+            logging.error("not a member of a project")
             sys.exit(-1)
 
     if '-M' in opts:
         email = opts['-M']
+        logging.debug("cmd line -M: email=%s" % email)
 
     if '-I' in opts:
         interactive = True
+        logging.debug("cmd line -I: interactive")
 
     if not user_under_disk_quota(username):
         print >> sys.stderr, "ERROR: You are over your disk quota."
         print >> sys.stderr, "       You cannot submit jobs until you have reduced your disk usage."
+        logging.error("disk over quota")
         sys.exit(-1)
 
     pbs_in = sys.stdin.readlines() 
 
     if len(pbs_in) == 0:
         print >> sys.stderr, "ERROR: Your pbs script is empty."
+        logging.error("script is empty")
         sys.exit(-1)
     
     first_line = pbs_in[0]
@@ -210,23 +260,27 @@ if __name__ == "__main__":
         else:
             shell = first_line[2:space].replace('\r', '')
         newshell = check_shell(shell)
+        logging.debug("#! line: shell=%s newshell=%s" % (shell, newshell))
 
         if newshell == False:
             error_and_die = True
             error  = "The shell you specified in your PBS script (%s) does not exist." % (shell)
             error += "\nYou may wish to email %s to get it installed, or consider using one of the more commonly available shells such as bash." % (help_email)
             error += "\nUnfortunately, we can't run your job\n"
+            logging.error("#! line: shell %s does not exist" % shell)
         elif newshell == "/bin/bash" and shell == "/bin/sh":
             newfirstline = "#!%s\n" % (newshell)
             print >> sys.stderr, "WARNING: The shell you specified in your PBS script (%s)" % (shell)
             print >> sys.stderr, "         is not recommended for use. We recommend you use %s" % (newshell)
             print >> sys.stderr, "         Please update your script with the new shell.\n"
+            logging.warn("#! line: shell %s not recommended" % shell)
         elif newshell != shell:
             newfirstline = "#!%s\n" % (newshell)
             print >> sys.stderr, "WARNING: The shell you specified in your PBS script (%s)" % (shell)
             print >> sys.stderr, "         does not exist in this location."
             print >> sys.stderr, "         It can be found at %s instead."% (newshell)
             print >> sys.stderr, "         Please update your script with the correct location.\n"
+            logging.warn("#! line: shell %s does not exist" % shell)
 
     else:
         if not interactive:
@@ -235,6 +289,7 @@ if __name__ == "__main__":
             print >> sys.stderr, "WARNING: You did not specify a shell in the first line of your PBS script."
             print >> sys.stderr, "         We have assumed you wish to use bash, however please update"
             print >> sys.stderr, "         your script with a valid shell\n"
+            logging.warn("#! line: shell not specified")
 
     have_hit_command_already = False
     have_hit_email_already = False
@@ -307,6 +362,7 @@ if __name__ == "__main__":
                print >> sys.stderr, "The software package '%s' is not available on Trifid" % (module)
                print >> sys.stderr, "Please run this software on Tango until furter notice"
                print >> sys.stderr, "If you feel this is an error, please email %s" % (help_email)
+               logging.error("The software package is not available")
                sys.exit(-1);
 
 # NOT YET BEEN IMPLEMENTED
@@ -328,6 +384,7 @@ if __name__ == "__main__":
             matlab_job = True
 
         if line.startswith('#PBS -l software') > 0:
+            logging.debug("#PBS -l software")
             software_line = i
 
         if line.startswith('#PBS -l software=MATLAB_Distrib_Comp_Engine') > 0:
@@ -355,14 +412,17 @@ if __name__ == "__main__":
         if line.count('/nfs/ibm/' + username) > 0 and not schrodinger_job and not hadoop_job:
             print >> sys.stderr, "Warning: You appear to be accessing /nfs/ibm/%s directly, instead of using /home/%s" % (username, username)
             print >> sys.stderr, "         Please amend your script to only access your files via /home, as this may break in the near future"
+            logging.warning("Accessing /nfs/ibm/ directly")
 
         if line.count('/nfs/user1/' + username) > 0 and not schrodinger_job and not hadoop_job:
             print >> sys.stderr, "Warning: You appear to be accessing /nfs/user1/%s directly, instead of using /home/%s" % (username, username)
             print >> sys.stderr, "         Please amend your script to only access your files via /home, as this may break in the near future"
+            logging.warning("Accessing /nfs/user1/ directly")
 
         if line.count('/nfs/user2/' + username) > 0 and not schrodinger_job and not hadoop_job:
             print >> sys.stderr, "Warning: You appear to be accessing /nfs/user2/%s directly, instead of using /home/%s" % (username, username)
             print >> sys.stderr, "         Please amend your script to only access your files via /home, as this may break in the near future"
+            logging.warning("Accessing /nfs/user2/ directly")
 
         # strip out lines with 'please replace' email addresses that users haven't replaced
         if line.startswith('#PBS -M YourEmail'):
@@ -374,22 +434,26 @@ if __name__ == "__main__":
         if line.startswith('#PBS -S'):
             shell = line.split(' ')[2].rstrip()
             newshell = check_shell(shell)
+            logging.debug("#PBS -S: shell=%s newshell=%s" % (shell, newshell))
 
             if newshell == False:
                 error_and_die = True
                 error  = "The shell you specified in your PBS script (%s) does not exist" % (shell)
                 error += "\nYou may wish to email %s to get it installed, or consider using one of the more commonly available shells such as bash." % (help_email)
                 error += "\nUnfortunately, we can't run your job\n"
+                logging.error("#PBS -S: shell %s does not exist" % shell)
             elif newshell == "/bin/bash" and shell == "/bin/sh":
                 newfirstline = "#!%s\n" % (newshell)
                 print >> sys.stderr, "Warning: the shell you specified in your PBS script (%s) is not recommended for use" % (shell)
                 print >> sys.stderr, "We recommend you use %s instead.  Please update your script with the new shell\n" % (newshell)
+                logging.warn("#PBS -S: shell %s not recommended" % shell)
             elif newshell != shell:
                 pbs_in[i] = "#PBS -S %s\n" % (newshell)
                 newfirstline = "#!%s\n" % (newshell)
                 error_and_die = False
                 print >> sys.stderr, "Warning: the shell you specified in your PBS script (%s) does not exist in this location" % (shell)
                 print >> sys.stderr, "It can be found at %s instead.  Please update your script with the correct location\n" % (newshell)
+                logging.warn("#PBS -S: shell %s does not exist at location" % shell)
             else:
                 newfirstline = "#!%s\n" % (newshell)
                 error_and_die = False
@@ -406,6 +470,7 @@ if __name__ == "__main__":
         if line.startswith('#PBS -A'):
             project_id = line.split(' ')[2].strip()
             project = get_project(username, project_id)
+            logging.debug("#PBS -A: project=%s, new_project=%s" % (project_id, project))
             pbs_in[i] = "#PBS -A %s\n" % (project)
             have_hit_project_already = True
 
@@ -423,6 +488,9 @@ if __name__ == "__main__":
                 email_line = i
                 have_hit_email_already = True
 
+
+    logging.debug("email=%s" % email)
+#    logging.debug("project=%s" % project)
 
     if email_line > 0:
         pbs_in.insert(email_line, "#PBS -M %s\n" % (email))
@@ -490,6 +558,7 @@ if __name__ == "__main__":
         print >> sys.stderr, "   http://www.vpac.org/training/tutorials/Acquiring_and_Using_Licenses"
         print >> sys.stderr, "   http://www.vpac.org/training/tutorials/ansys_setup"
         print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
+        logging.error("using ANSYS or Fluent and not requesting licenses")
         sys.exit(-1)
 
     if ( fluent_job or ansys_job ):
@@ -498,6 +567,7 @@ if __name__ == "__main__":
             print >> sys.stderr, "       Limits exist to stop you using more than 128 cores for a single job."
             print >> sys.stderr, "       The job you submitted asked for %s cores." % ( core_count )
             print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
+            logging.error("using ANSYS or Fluent and have asked for more than 128 cores")
             sys.exit(-1)
 
 
@@ -509,6 +579,7 @@ if __name__ == "__main__":
         print >> sys.stderr, "ERROR: You are using Abaqus and not requesting licenses properly."
         print >> sys.stderr, "See:  http://www.vpac.org/training/tutorials/Acquiring_and_Using_Licenses"
         print >> sys.stderr, "If you don't understand this message, please email %s for assistance.\n" % (help_email)
+        logging.error("using Abaqus and not requesting licenses properly")
         sys.exit(-1)
 
     if software_line:
@@ -516,6 +587,7 @@ if __name__ == "__main__":
         print >> sys.stderr, "This is not the recommended method for requesting software licenses."
         print >> sys.stderr, "Please read this tutorial for details: http://www.vpac.org/training/tutorials/Acquiring_and_Using_Licenses"
         print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
+        logging.error("specified a \"-l software\" line in pbs script")
         if matlab_software_line:
             pbs_in[matlab_software_line] = ""
 
@@ -524,6 +596,7 @@ if __name__ == "__main__":
         print >> sys.stderr, "This is no longer valid. The separator needs to be a % symbol."
         print >> sys.stderr, "Your submitted job has been modified, but your original script needs correcting."
         print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
+        logging.error("specified a GRES option with a comma separator")
         gres = gres.replace(',','%')
         pbs_in[gres_line] = gres + "\n"
 
@@ -553,4 +626,6 @@ if __name__ == "__main__":
         else:
             pbs_in[gres_line] = gres + "\n"
 
+    logging.debug("writing stdout")
     sys.stdout.writelines(pbs_in)
+    logging.debug("finished")
