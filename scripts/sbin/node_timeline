@@ -27,7 +27,8 @@ import os
 import pwd
 import getopt
 
-pbs_dir = "/usr/spool/PBS"
+#pbs_dir = "/usr/spool/PBS"
+pbs_dir = "/var/spool/torque"
 node = "test"
 print_exec_host = False
 verbose = False
