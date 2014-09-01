@@ -1,0 +1,14 @@
+#!/bin/bash
+
+[ -x /usr/bin/logger ] || exit 0
+
+#if [ x"$1" == "xload" -o x"$1" == "xswitch" ]
+#then
+ if [ ! -z $PBS_JOBID ]
+ then
+ /usr/bin/logger -p user.info -t module_log_job "$LOGNAME $PBS_JOBID $LOADEDMODULES"
+ else
+ /usr/bin/logger -p user.info -t module_log "$LOGNAME $LOADEDMODULES"
+ fi
+#fi
+
