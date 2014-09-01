@@ -62,7 +62,8 @@ def get_node_info():
 def get_proc_info():
 
     from subprocess import Popen, PIPE
-    proc = Popen(['/usr/local/bin/dsh', '-f', '-N', 'compute', '/usr/local/recluse/scripts/bin/whosonnode'], stdout=PIPE, stderr=PIPE)
+    # proc = Popen(['/usr/local/bin/dsh', '-f', '-N', 'compute', '/usr/local/recluse/scripts/bin/whosonnode'], stdout=PIPE, stderr=PIPE)
+    proc = Popen(['/opt/xcat/bin/xdsh', 'trifid-compute,big-compute,gpu-compute', '/usr/local/recluse/scripts/bin/whosonnode'], stdout=PIPE, stderr=PIPE)
     return_code = proc.wait()
     if return_code == 0:
         dsh_out = proc.stdout.read()
