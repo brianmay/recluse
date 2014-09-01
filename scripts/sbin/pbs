@@ -167,7 +167,7 @@ status() {
 
 RETVAL=0
 
-if [ "$(hostname)" == "$mgtnode" ];
+if [ "$(hostname -f)" == "$mgtnode" ];
 	then NODETYPE="managment";
 fi;
 
