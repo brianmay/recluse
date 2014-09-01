@@ -9,6 +9,10 @@ hostname=$(hostname)
 busy=$(/usr/local/recluse/scripts/bin/whatson -s | wc -l)
 found=0
 
+#echo $hostname
+#echo $busy
+#echo $found
+
 if [ $busy -eq 0 ]
 then
 	for file in /usr/local/recluse/nodestatus/forcestatus/$hostname-*
