@@ -453,7 +453,7 @@ if __name__ == "__main__":
     if software_line:
         print >> sys.stderr, "WARNING: You have specified a \"-l software\" line in your pbs script."
         print >> sys.stderr, "This is not the recommended method for requesting software licenses."
-        print >> sys.stderr, "Please read this tutorial for details: http://www.vpac.org/node/353"
+        print >> sys.stderr, "Please read this tutorial for details: http://www.vpac.org/training/tutorials/Acquiring_and_Using_Licenses"
         print >> sys.stderr, "If you have further problems, please email %s for assistance.\n" % (help_email)
         if matlab_software_line:
             pbs_in[matlab_software_line] = ""
