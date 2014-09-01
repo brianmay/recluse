@@ -1,4 +1,4 @@
-#!/usr/local/sbin/known_good_python -E
+#!/usr/bin/python -E
 
 # Written by Brett Pemberton (brett@vpac.org), Sam Morrison (sam@vpac.org)
 # Copyright (C) 2009 Victorian Partnership for Advanced Computing
