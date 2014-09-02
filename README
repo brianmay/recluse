@@ -21,7 +21,7 @@ Install Instructions:
 
 1) Install CentOS on management node
 2) Check out recluse to /usr/local/recluse
-	svn co https://svn.vpac.org/recluse/trunk /usr/local/recluse
+	git clone git@github.com:VPAC/recluse.git /usr/local/recluse
 3) Check out kernel svn to /usr/local/recluse/centos/5/kernel
 	svn co https://svn.vpac.org/recluse-kernel-supermicro/trunk /usr/local/recluse/centos/5/kernel
 or
